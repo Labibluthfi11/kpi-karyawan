@@ -10,12 +10,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role_id', 'parent_id', 'department_id'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'name', 
+        'email', 
+        'password', 
+        'role_id', 
+        'supervisor_id', 
+        'department_id', 
+        'pin'
+    ];
+
+    protected $hidden = [
+        'password', 
+        'remember_token',
+    ];
 
     public function role()
     {
@@ -34,12 +47,17 @@ class User extends Authenticatable
 
     public function supervisor()
     {
-        return $this->belongsTo(User::class, 'parent_id');
+        return $this->belongsTo(User::class, 'supervisor_id');
     }
 
     public function subordinates()
     {
-        return $this->hasMany(User::class, 'parent_id');
+        return $this->hasMany(User::class, 'supervisor_id');
+    }
+
+    public function assessmentsReceived()
+    {
+        return $this->hasMany(KpiAssessment::class, 'evaluatee_id');
     }
 
     /**

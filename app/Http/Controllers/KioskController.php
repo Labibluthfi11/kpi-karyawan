@@ -39,23 +39,21 @@ class KioskController extends Controller
 
     // 5. Tampilkan daftar orang yang harus dinilai
     public function assessment() {
-        dd('KONTROLER KEPANGGIL BRO!');
         $user = User::find(session('kiosk_user_id'));
         if (!$user) return redirect()->route('kiosk.department');
 
-        $targetUsers = [];
-        // Logic filter target user yang sama dengan di KpiAssessmentController::index()
-        if ($user->role->name === 'Leader') {
-            $targetUsers = User::where('department_id', $user->department_id)
-                               ->whereHas('role', function($query) {
-                                   $query->where('name', 'Anggota');
-                               })->get();
-        } elseif ($user->role->name === 'Anggota') {
-            $targetUsers = User::where('department_id', $user->department_id)
-                               ->whereHas('role', function($query) {
-                                   $query->where('name', 'Leader');
-                               })->get();
-        }
+        // Mengambil daftar karyawan yang harus dinilai oleh user ini (berdasarkan mapping)
+        // DAN belum dinilai hari ini
+        $targetUsers = \App\Models\AssessmentAssignment::where('evaluator_id', $user->id)
+            ->with('evaluatee')
+            ->get()
+            ->pluck('evaluatee')
+            ->filter(function ($evaluatee) use ($user) {
+                return !\App\Models\KpiAssessment::where('evaluator_id', $user->id)
+                    ->where('evaluatee_id', $evaluatee->id)
+                    ->whereDate('assessment_date', now()->toDateString())
+                    ->exists();
+            });
 
         return view('kiosk.assessment', compact('targetUsers'));
     }

@@ -19,15 +19,24 @@ Route::prefix('kiosk')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    
 
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    Route::get('/admin/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
 
-    Route::get('/kpi', [KpiAssessmentController::class, 'index'])->name('kpi.index');
+    // Admin CRUD Routes
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('departments', App\Http\Controllers\Admin\DepartmentController::class);
+        Route::resource('users', App\Http\Controllers\Admin\UserController::class);
+        Route::resource('periods', App\Http\Controllers\Admin\PeriodController::class);
+        Route::resource('assignments', App\Http\Controllers\Admin\AssignmentController::class);
+        Route::post('assignments/refresh', [App\Http\Controllers\Admin\AssignmentController::class, 'refresh'])->name('assignments.refresh');
+        Route::get('results', [App\Http\Controllers\Admin\UserController::class, 'results'])->name('results.index');
+        Route::get('results/{user}', [App\Http\Controllers\Admin\UserController::class, 'userResults'])->name('results.show');
+    });
+
+    Route::get('/kpi/no-period', function () {
+        return view('kpi.no-period');
+    })->name('kpi.no-period');
     Route::get('/kpi/form/{user}', [KpiAssessmentController::class, 'form'])->name('kpi.form');
     Route::post('/kpi/store/{user}', [KpiAssessmentController::class, 'store'])->name('kpi.store');
 });
