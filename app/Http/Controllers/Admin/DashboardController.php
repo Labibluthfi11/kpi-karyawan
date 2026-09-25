@@ -26,7 +26,7 @@ class DashboardController extends Controller
         $currentPeriod = AssessmentPeriod::find($periodId);
         
         // Cari periode sebelumnya (berdasarkan ID yang lebih kecil atau tanggal)
-        $previousPeriod = AssessmentPeriod::where('id', '<', $periodId)->orderBy('id', 'desc')->first();
+        $previousPeriod = $periodId ? AssessmentPeriod::where('id', '<', $periodId)->orderBy('id', 'desc')->first() : null;
 
         // Data Chart: Rata-rata nilai per periode (tetap global untuk tren)
         $chartData = AssessmentPeriod::all()->mapWithKeys(function ($period) {
