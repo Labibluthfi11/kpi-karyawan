@@ -7,8 +7,8 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Filter Periode -->
-            <div class="mb-6">
+            <!-- Filter Periode & Ekspor -->
+            <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <form action="{{ route('admin.results.index') }}" method="GET" class="flex gap-3 items-center">
                     <label class="font-semibold text-[#16302E]">Periode:</label>
                     <select name="period_id" onchange="this.form.submit()" class="border-2 rounded-lg px-3 py-2 focus:ring-0 focus:border-[#75B8C0]" style="border-color:#16302E;">
@@ -19,6 +19,19 @@
                         @endforeach
                     </select>
                 </form>
+
+                <div class="flex gap-2">
+                    <a href="{{ route('admin.results.export.excel', ['period_id' => $periodId]) }}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2F5B1F] text-white rounded-lg font-semibold text-xs border-2 transition-all hover:-translate-y-0.5"
+                       style="border-color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
+                         Ekspor Excel
+                    </a>
+                    <a href="{{ route('admin.results.export.pdf', ['period_id' => $periodId]) }}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D97757] text-white rounded-lg font-semibold text-xs border-2 transition-all hover:-translate-y-0.5"
+                       style="border-color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
+                         Cetak PDF
+                    </a>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -27,7 +40,7 @@
                         $palette = ['#75B8C0', '#F4A261', '#16302E'];
                         $accent = $palette[$loop->index % 3];
                     @endphp
-                    <div class="bg-white rounded-xl border-2 overflow-hidden" 
+                    <div class="bg-white rounded-xl border-2 overflow-hidden"
                          x-data="{ search: '' }"
                          style="border-color:#16302E; box-shadow:4px 4px 0px 0px #16302E;">
                         <div class="p-4 flex items-center justify-between" style="background:#F1F6F5;">
@@ -43,10 +56,10 @@
                                 </svg>
                             </div>
                         </div>
-                        
+
                         <div class="px-4 pt-4">
-                            <input type="text" x-model="search" placeholder="Cari nama karyawan..." 
-                                   class="w-full text-xs border-2 rounded-lg px-3 py-2 focus:outline-none" 
+                            <input type="text" x-model="search" placeholder="Cari nama karyawan..."
+                                   class="w-full text-xs border-2 rounded-lg px-3 py-2 focus:outline-none"
                                    style="border-color:#16302E;">
                         </div>
 
@@ -66,7 +79,7 @@
                                             $color = $avg >= 4 ? '#2F5B1F' : ($avg >= 3 ? '#16302E' : '#D97757');
                                             $bg = $avg >= 4 ? '#E8F4E0' : ($avg >= 3 ? '#F1F6F5' : '#FDE8E4');
                                         @endphp
-                                        <tr class="border-b last:border-0 user-row" 
+                                        <tr class="border-b last:border-0 user-row"
                                             x-show="'{{ strtolower($user['name']) }}'.includes(search.toLowerCase())"
                                             style="border-color:#EEF2F1;">
                                             <td class="py-2.5 font-medium" style="color:#16302E;">{{ $user['name'] }}</td>
@@ -76,7 +89,7 @@
                                                 </span>
                                             </td>
                                             <td class="py-2.5 text-right">
-                                                <a href="{{ route('admin.results.show', [$user['id'], 'period_id' => $periodId]) }}" 
+                                                <a href="{{ route('admin.results.show', [$user['id'], 'period_id' => $periodId]) }}"
                                                    class="text-xs font-semibold px-3 py-1 rounded-lg border-2 transition-all hover:bg-[#16302E] hover:text-white"
                                                    style="color:#75B8C0; border-color:#75B8C0;">Detail</a>
                                             </td>

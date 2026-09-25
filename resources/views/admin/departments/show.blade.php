@@ -7,6 +7,26 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="mb-6 flex justify-between items-center">
+                <a href="{{ route('admin.departments.index') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-white border-2 rounded-lg font-semibold text-sm transition-all hover:-translate-x-1"
+                   style="border-color:#16302E; color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
+                    ← Kembali
+                </a>
+                <div class="flex gap-2">
+                    <a href="{{ route('admin.departments.export.excel', [$department, 'period_id' => $periodId]) }}" 
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2F5B1F] text-white rounded-lg font-semibold text-xs border-2 transition-all hover:-translate-y-0.5"
+                       style="border-color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
+                        📊 Ekspor Excel Divisi
+                    </a>
+                    <a href="{{ route('admin.departments.export.pdf', [$department, 'period_id' => $periodId]) }}" 
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D97757] text-white rounded-lg font-semibold text-xs border-2 transition-all hover:-translate-y-0.5"
+                       style="border-color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
+                        📄 Cetak PDF Divisi
+                    </a>
+                </div>
+            </div>
+
             <div class="bg-white rounded-xl border-2 p-6" style="border-color:#16302E; box-shadow:4px 4px 0px 0px #16302E;">
                 <h3 class="font-semibold text-lg mb-4" style="color:#16302E;">Daftar Karyawan</h3>
                 

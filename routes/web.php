@@ -32,6 +32,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('assignments', App\Http\Controllers\Admin\AssignmentController::class);
         Route::post('assignments/refresh', [App\Http\Controllers\Admin\AssignmentController::class, 'refresh'])->name('assignments.refresh');
         Route::get('results', [App\Http\Controllers\Admin\UserController::class, 'results'])->name('results.index');
+        
+        // Report Exports (Semua, Divisi, Individu)
+        Route::get('results/export/excel', [App\Http\Controllers\Admin\ReportExportController::class, 'exportAllExcel'])->name('results.export.excel');
+        Route::get('results/export/pdf', [App\Http\Controllers\Admin\ReportExportController::class, 'exportAllPdf'])->name('results.export.pdf');
+        Route::get('departments/{department}/export/excel', [App\Http\Controllers\Admin\ReportExportController::class, 'exportDepartmentExcel'])->name('departments.export.excel');
+        Route::get('departments/{department}/export/pdf', [App\Http\Controllers\Admin\ReportExportController::class, 'exportDepartmentPdf'])->name('departments.export.pdf');
+        Route::get('results/{user}/export/excel', [App\Http\Controllers\Admin\ReportExportController::class, 'exportUserExcel'])->name('results.user.export.excel');
+        Route::get('results/{user}/export/pdf', [App\Http\Controllers\Admin\ReportExportController::class, 'exportUserPdf'])->name('results.user.export.pdf');
+
         Route::get('results/{user}', [App\Http\Controllers\Admin\UserController::class, 'userResults'])->name('results.show');
     });
 

@@ -7,12 +7,24 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="mb-6">
-                <a href="{{ route('admin.results.index', ['period_id' => request('period_id')]) }}" 
+            <div class="mb-6 flex justify-between items-center">
+                <a href="{{ route('admin.results.index', ['period_id' => request('period_id')]) }}"
                    class="inline-flex items-center px-4 py-2 bg-white border-2 rounded-lg font-semibold text-sm transition-all hover:-translate-x-1"
                    style="border-color:#16302E; color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
                     ← Kembali
                 </a>
+                <div class="flex gap-2">
+                    <a href="{{ route('admin.results.user.export.excel', [$user, 'period_id' => request('period_id')]) }}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2F5B1F] text-white rounded-lg font-semibold text-xs border-2 transition-all hover:-translate-y-0.5"
+                       style="border-color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
+                         Ekspor Excel Individu
+                    </a>
+                    <a href="{{ route('admin.results.user.export.pdf', [$user, 'period_id' => request('period_id')]) }}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D97757] text-white rounded-lg font-semibold text-xs border-2 transition-all hover:-translate-y-0.5"
+                       style="border-color:#16302E; box-shadow:2px 2px 0px 0px #16302E;">
+                         Cetak PDF Individu
+                    </a>
+                </div>
             </div>
             @forelse($assessments as $assessment)
                 @php
@@ -22,7 +34,7 @@
                 <div class="bg-white p-6 rounded-xl border-2 mb-6" style="border-color:#16302E; box-shadow:4px 4px 0px 0px #16302E;">
                     <div class="flex justify-between items-start mb-6">
                         <h3 class="font-bold text-lg" style="font-family:'Space Grotesk', sans-serif; color:#16302E;">
-                            Dinilai oleh: {{ $assessment->evaluator->name }} 
+                            Dinilai oleh: {{ $assessment->evaluator->name }}
                             <span class="text-sm font-normal text-[#5B6B68]">({{ $assessment->assessment_date }})</span>
                         </h3>
                         <div class="text-right">
@@ -30,14 +42,14 @@
                             <div class="text-2xl font-bold" style="color:#75B8C0; font-family:'Space Grotesk', sans-serif;">{{ $avgScore }} / 5.00</div>
                         </div>
                     </div>
-                    
+
                     @if($assessment->general_note)
                         <div class="mb-6 p-4 bg-[#F1F6F5] rounded-xl border border-[#16302E]/10">
                             <h4 class="font-bold text-sm mb-1" style="color:#16302E;">Catatan Umum:</h4>
                             <p class="text-sm text-[#5B6B68] italic">{{ $assessment->general_note }}</p>
                         </div>
                     @endif
-                    
+
                     @php
                         $groupedResults = $assessment->results->groupBy('question.category');
                     @endphp
@@ -55,7 +67,7 @@
                                 </h4>
                                 <span class="text-sm font-bold" style="color:#75B8C0;">{{ number_format($catAvg, 2) }}</span>
                             </div>
-                            
+
                             <!-- Progress Bar -->
                             <div class="w-full bg-[#F1F6F5] rounded-full h-2.5 mb-4 border border-[#16302E]/10">
                                 <div class="h-2.5 rounded-full" style="width: {{ $catPercentage }}%; background:{{ $catAvg >= 4 ? '#2F5B1F' : ($catAvg >= 3 ? '#75B8C0' : '#D97757') }};"></div>
