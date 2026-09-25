@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\Loggable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -13,7 +14,13 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, Loggable;
+
+    const ROLE_ADMIN = 'Admin';
+    const ROLE_LEADER = 'Leader';
+    const ROLE_SUPERVISOR = 'Supervisor';
+    const ROLE_ANGGOTA = 'Anggota';
+    const ROLE_MANAGER = 'Manager';
 
     protected $fillable = [
         'name', 

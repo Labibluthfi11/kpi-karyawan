@@ -37,23 +37,23 @@ class KioskController extends Controller
         return redirect()->route('kiosk.assessment');
     }
 
+    // 4b. Log Out Kiosk
+    public function logout() {
+        session()->forget('kiosk_user_id');
+        return redirect()->route('kiosk.department')->with('success', 'Anda telah keluar dari sesi.');
+    }
+
     // 5. Tampilkan daftar orang yang harus dinilai
     public function assessment() {
         $user = User::find(session('kiosk_user_id'));
         if (!$user) return redirect()->route('kiosk.department');
 
         // Mengambil daftar karyawan yang harus dinilai oleh user ini (berdasarkan mapping)
-        // DAN belum dinilai hari ini
         $targetUsers = \App\Models\AssessmentAssignment::where('evaluator_id', $user->id)
             ->with('evaluatee')
             ->get()
             ->pluck('evaluatee')
-            ->filter(function ($evaluatee) use ($user) {
-                return !\App\Models\KpiAssessment::where('evaluator_id', $user->id)
-                    ->where('evaluatee_id', $evaluatee->id)
-                    ->whereDate('assessment_date', now()->toDateString())
-                    ->exists();
-            });
+            ->unique('id');
 
         return view('kiosk.assessment', compact('targetUsers'));
     }

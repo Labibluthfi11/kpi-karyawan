@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Loggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AssessmentAssignment extends Model
 {
-    use HasFactory;
+    use HasFactory, Loggable;
 
-    protected $fillable = ['evaluator_id', 'evaluatee_id', 'type', 'status'];
+    protected $fillable = ['evaluator_id', 'evaluatee_id', 'type', 'status', 'period_id'];
 
     public function evaluator()
     {
@@ -21,53 +22,46 @@ class AssessmentAssignment extends Model
         return $this->belongsTo(User::class, 'evaluatee_id');
     }
 
+    public function period()
+    {
+        return $this->belongsTo(AssessmentPeriod::class, 'period_id');
+    }
+
     public static function generate()
     {
-        self::truncate();
+        $currentPeriod = \App\Models\AssessmentPeriod::where('is_active', true)->first();
+        if (!$currentPeriod) return;
         
         $users = User::with(['role', 'department'])->get();
-        
-        // Pengelompokan berdasarkan Role
-        $leaders = $users->where('role.name', 'Leader');
-        $supervisors = $users->where('role.name', 'Supervisor');
-        $managers = $users->where('role.name', 'Manager');
-        
-        // Pengelompokan berdasarkan Group Departemen
-        $manufacturingUsers = $users->where('department.group', 'manufacturing');
-        $officeUsers = $users->where('department.group', 'office');
+        $leaders = $users->where('role.name', \App\Models\User::ROLE_LEADER);
+        $supervisors = $users->where('role.name', \App\Models\User::ROLE_SUPERVISOR);
 
-        // 1. Atasan - Bawahan (Otomatis)
+        $safeCreate = function($evaluatorId, $evaluateeId, $type) use ($currentPeriod) {
+            if ($evaluatorId == $evaluateeId) return;
+            
+            self::updateOrCreate([
+                'evaluator_id' => $evaluatorId,
+                'evaluatee_id' => $evaluateeId,
+                'period_id' => $currentPeriod->id,
+            ], [
+                'type' => $type,
+                'status' => 'pending',
+            ]);
+        };
+
+        // 1. Atasan - Bawahan
         foreach ($users as $user) {
-            // Manager/User di departemen "Manager" tidak bisa dinilai (bukan evaluatee)
             if ($user->role?->name == 'Manager' || $user->department?->name == 'Manager') continue;
-
             if ($user->supervisor_id) {
-                // Atasan menilai bawahan
-                self::create([
-                    'evaluator_id' => $user->supervisor_id,
-                    'evaluatee_id' => $user->id,
-                    'type' => 'leader_to_team',
-                    'status' => 'pending'
-                ]);
-                // Bawahan menilai atasan (hanya jika atasan bukan di departemen "Manager")
+                $safeCreate($user->supervisor_id, $user->id, 'leader_to_team');
                 $supervisor = $users->firstWhere('id', $user->supervisor_id);
                 if ($supervisor && $supervisor->department?->name != 'Manager') {
-                    self::create([
-                        'evaluator_id' => $user->id,
-                        'evaluatee_id' => $user->supervisor_id,
-                        'type' => 'team_to_leader',
-                        'status' => 'pending'
-                    ]);
+                    $safeCreate($user->id, $user->supervisor_id, 'team_to_leader');
                 }
-                }
-                }
+            }
+        }
 
-
-        // 2. Antar Leader (Rotasi 1-on-1 Bergilir per Periode, terisolasi per Group)
-        // Mengecualikan leader yang berada di departemen "Manager" atau "Supervisor" dari rotasi
-        $currentPeriod = \App\Models\AssessmentPeriod::where('is_active', true)->first();
-        $periodIndex = $currentPeriod ? $currentPeriod->id : 1;
-
+        // 2. Antar Leader (Strict 1-to-1)
         $filteredLeaders = $leaders->filter(function ($leader) {
             return !in_array($leader->department?->name, ['Manager', 'Supervisor']);
         });
@@ -80,34 +74,23 @@ class AssessmentAssignment extends Model
         foreach ($leaderGroups as $group => $groupedLeaders) {
             $leadersArray = $groupedLeaders->values();
             $count = $groupedLeaders->count();
-            if ($count < 2) continue; // Minimal 2 orang untuk rotasi
+            if ($count < 2) continue;
 
+            // Pastikan setiap leader hanya punya 1 target penilaian
+            // Menggunakan pergeseran tetap agar tidak dobel dalam satu periode
             for ($i = 0; $i < $count; $i++) {
-                // Algoritma rotasi: setiap periode, geser targetnya
-                $targetIndex = ($i + $periodIndex) % $count;
-                if ($i == $targetIndex) $targetIndex = ($i + 1) % $count; // Hindari nilai diri sendiri
-
-                self::create([
-                    'evaluator_id' => $leadersArray[$i]->id,
-                    'evaluatee_id' => $leadersArray[$targetIndex]->id,
-                    'type' => 'leader_to_leader',
-                    'status' => 'pending'
-                ]);
+                $targetIndex = ($i + 1) % $count;
+                $safeCreate($leadersArray[$i]->id, $leadersArray[$targetIndex]->id, 'leader_to_leader');
             }
         }
 
-        // 3. Supervisor dinilai Leader Produksi (Khusus Manufacturing)
+        // 3. Supervisor dinilai Leader Produksi
         $manufacturingLeaders = $leaders->where('department.group', 'manufacturing');
         $manufacturingSupervisors = $supervisors->where('department.group', 'manufacturing');
         
         foreach ($manufacturingSupervisors as $supervisor) {
             foreach ($manufacturingLeaders as $leader) {
-                self::create([
-                    'evaluator_id' => $leader->id,
-                    'evaluatee_id' => $supervisor->id,
-                    'type' => 'team_to_leader', // Leader menilai Supervisor
-                    'status' => 'pending'
-                ]);
+                $safeCreate($leader->id, $supervisor->id, 'team_to_leader');
             }
         }
     }

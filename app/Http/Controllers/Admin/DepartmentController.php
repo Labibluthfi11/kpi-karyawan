@@ -49,4 +49,15 @@ class DepartmentController extends Controller
         $department->delete();
         return redirect()->route('admin.departments.index')->with('success', 'Divisi berhasil dihapus');
     }
+
+    public function show(Department $department, Request $request)
+    {
+        $periodId = $request->query('period_id', \App\Models\AssessmentPeriod::where('is_active', true)->first()?->id);
+        
+        $users = $department->users()->with(['assessmentsReceived' => function($q) use ($periodId) {
+            $q->where('period_id', $periodId);
+        }, 'assessmentsReceived.results'])->get();
+
+        return view('admin.departments.show', compact('department', 'users', 'periodId'));
+    }
 }

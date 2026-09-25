@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\Loggable;
 use Illuminate\Database\Eloquent\Model;
 
 class KpiAssessment extends Model
 {
-    protected $fillable = ['evaluator_id', 'evaluatee_id', 'assessment_date'];
+    use Loggable;
+
+    protected $fillable = ['evaluator_id', 'evaluatee_id', 'assessment_date', 'period_id', 'status', 'general_note'];
 
     public function evaluator()
     {
@@ -16,6 +19,11 @@ class KpiAssessment extends Model
     public function evaluatee()
     {
         return $this->belongsTo(User::class, 'evaluatee_id');
+    }
+
+    public function period()
+    {
+        return $this->belongsTo(AssessmentPeriod::class, 'period_id');
     }
 
     public function results()

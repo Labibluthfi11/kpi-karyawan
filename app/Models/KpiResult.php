@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class KpiResult extends Model
 {
-    protected $fillable = ['assessment_id', 'question_id', 'score'];
+    protected $fillable = ['assessment_id', 'question_id', 'score', 'note'];
 
     public function assessment()
     {

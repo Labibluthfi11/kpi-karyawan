@@ -15,6 +15,7 @@ Route::prefix('kiosk')->group(function () {
     Route::get('/assessment', [KioskController::class, 'assessment'])->name('kiosk.assessment');
     Route::get('/pin/{user}', [KioskController::class, 'pinForm'])->name('kiosk.pin');
     Route::post('/verify/{user}', [KioskController::class, 'verifyPin'])->name('kiosk.verify');
+    Route::post('/logout', [KioskController::class, 'logout'])->name('kiosk.logout');
     Route::get('/{department}', [KioskController::class, 'selectUser'])->name('kiosk.user');
 });
 

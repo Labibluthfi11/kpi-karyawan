@@ -19,17 +19,21 @@ class UserController extends Controller
                 $query->where('name', '!=', 'Admin');
             })
             ->orderBy('name', 'asc')
-            ->get();
+            ->get()
+            ->groupBy(function($user) {
+                return $user->department ? $user->department->name : 'Tanpa Divisi';
+            });
+            
         return view('admin.users.index', compact('users'));
     }
 
     public function create()
     {
         $departments = Department::all();
-        $roles = Role::whereIn('name', ['Leader', 'Anggota'])->get();
+        $roles = Role::whereIn('name', [\App\Models\User::ROLE_LEADER, \App\Models\User::ROLE_ANGGOTA])->get();
         // Filter: Hanya ambil user yang role-nya Leader atau Supervisor
         $potentialSupervisors = User::whereHas('role', function ($query) {
-            $query->whereIn('name', ['Leader', 'Supervisor']);
+            $query->whereIn('name', [\App\Models\User::ROLE_LEADER, \App\Models\User::ROLE_SUPERVISOR]);
         })->get();
         return view('admin.users.create', compact('departments', 'roles', 'potentialSupervisors'));
     }
@@ -65,11 +69,11 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $departments = Department::all();
-        $roles = Role::whereIn('name', ['Leader', 'Anggota'])->get();
+        $roles = Role::whereIn('name', [\App\Models\User::ROLE_LEADER, \App\Models\User::ROLE_ANGGOTA])->get();
         // Filter: Hanya ambil user yang role-nya Leader atau Supervisor dan bukan dirinya sendiri
         $potentialSupervisors = User::where('id', '!=', $user->id)
             ->whereHas('role', function ($query) {
-                $query->whereIn('name', ['Leader', 'Supervisor']);
+                $query->whereIn('name', [\App\Models\User::ROLE_LEADER, \App\Models\User::ROLE_SUPERVISOR]);
             })->get();
         return view('admin.users.edit', compact('user', 'departments', 'roles', 'potentialSupervisors'));
     }
@@ -101,27 +105,66 @@ class UserController extends Controller
             return redirect()->route('admin.users.index')->with('error', 'Akun Admin tidak bisa dihapus!');
         }
 
+        // Hapus data terkait sebelum menghapus user
+        $user->assessmentsReceived()->each(function ($assessment) {
+            $assessment->results()->delete();
+            $assessment->delete();
+        });
+        
+        $user->assignments()->delete(); 
+
         $user->delete();
-        return redirect()->route('admin.users.index')->with('success', 'Karyawan berhasil dihapus');
+        return redirect()->route('admin.users.index')->with('success', 'Selamat anda berhasil menghapus karyawan bangsat nanbiadap serta pukimak ini');
     }
 
-    public function results()
+    public function results(Request $request)
     {
-        $users = User::whereHas('role', function ($query) {
-            $query->where('name', '!=', 'Admin');
-        })
-        ->with('department')
-        ->get()
-        ->groupBy(function($user) {
-            return $user->department ? $user->department->name : 'Tanpa Divisi';
+        $activePeriod = \App\Models\AssessmentPeriod::where('is_active', true)->first();
+        $periodId = $request->query('period_id', $activePeriod ? $activePeriod->id : null);
+        $periods = \App\Models\AssessmentPeriod::all();
+
+        $departments = \App\Models\Department::with(['users' => function($q) {
+            $q->whereHas('role', function ($qr) {
+                $qr->where('name', '!=', 'Admin');
+            });
+        }, 'users.assessmentsReceived' => function($q) use ($periodId) {
+            $q->where('period_id', $periodId);
+        }, 'users.assessmentsReceived.results'])
+        ->get();
+
+        $processedDepartments = $departments->map(function ($dept) {
+            $deptUsers = $dept->users->map(function ($user) {
+                $scores = $user->assessmentsReceived->flatMap->results->pluck('score');
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'avg' => $scores->avg() ? (float)number_format($scores->avg(), 2) : 0
+                ];
+            })->sortByDesc('avg');
+
+            return [
+                'name' => $dept->name,
+                'user_count' => $deptUsers->count(),
+                'avg' => $deptUsers->avg('avg') ? number_format($deptUsers->avg('avg'), 2) : 0,
+                'users' => $deptUsers
+            ];
         });
 
-        return view('admin.results.index', compact('users'));
+        return view('admin.results.index', compact('processedDepartments', 'periods', 'periodId'));
     }
 
-    public function userResults(User $user)
+    public function userResults(Request $request, User $user)
     {
+        $periodId = $request->query('period_id');
+        
+        // Jika tidak ada period_id di URL, ambil periode aktif
+        if (!$periodId) {
+            $activePeriod = \App\Models\AssessmentPeriod::where('is_active', true)->first();
+            $periodId = $activePeriod ? $activePeriod->id : null;
+        }
+
         $assessments = \App\Models\KpiAssessment::where('evaluatee_id', $user->id)
+            ->where('period_id', $periodId)
             ->with(['evaluator', 'results.question'])
             ->latest()
             ->get();
