@@ -8,6 +8,12 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            @if (session('success'))
+                <div class="mb-6 p-4 rounded-xl border-2 bg-green-50" style="border-color:#16302E; color:#16302E;">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             <div class="flex items-center justify-between mb-6">
                 <p class="text-sm text-[#5B6B68]">{{ count($departments) }} divisi terdaftar</p>
                 <a href="{{ route('admin.departments.create') }}"
@@ -52,19 +58,62 @@
                                 <a href="{{ route('admin.departments.edit', $dept) }}" class="text-sm font-medium" style="color:#75B8C0;">
                                     Edit
                                 </a>
-                                <form action="{{ route('admin.departments.destroy', $dept) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-sm font-medium" style="color:#D97757;" onclick="return confirm('Hapus?')">
-                                        Hapus
-                                    </button>
-                                </form>
+                                <button type="button" 
+                                        class="text-sm font-medium transition-all hover:text-red-700" 
+                                        style="color:#D97757;"
+                                        x-on:click="$dispatch('open-delete-modal', '{{ route('admin.departments.destroy', $dept) }}')">
+                                    Hapus
+                                </button>
                             </div>
                         </div>
                     @endforeach
                 </div>
             @endif
 
+        </div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div x-data="{ show: false }" 
+         x-on:open-delete-modal.window="show = true; document.getElementById('delete-form').action = $event.detail;"
+         x-on:close-modal.window="show = false"
+         x-show="show" 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="display: none;">
+         
+        <!-- Overlay -->
+        <div x-on:click="show = false" class="fixed inset-0 bg-[#16302E] opacity-50"></div>
+
+        <!-- Modal Content -->
+        <div class="bg-white p-6 rounded-xl border-2 z-10 w-full max-w-lg" 
+             style="border-color:#16302E; box-shadow:6px 6px 0px 0px #16302E;"
+             x-show="show"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-4">
+             
+            <h2 class="text-xl font-bold mb-4" style="font-family:'Space Grotesk', sans-serif; color:#16302E;">
+                Hapus Divisi?
+            </h2>
+            <p class="mb-6 text-[#5B6B68]">Apakah anda yakin ingin menghapus divisi ini dari sistem?</p>
+            
+            <form id="delete-form" method="POST" class="flex justify-end gap-3">
+                @csrf @method('DELETE')
+                <button type="button" 
+                        x-on:click="show = false"
+                        class="font-medium py-2 px-5 rounded-lg border-2 transition-all"
+                        style="border-color:#16302E; color:#16302E;">
+                    Batal
+                </button>
+                <button type="submit" 
+                        class="font-medium py-2 px-5 rounded-lg text-white border-2 transition-all"
+                        style="background:#D97757; border-color:#16302E;">
+                    Oke
+                </button>
+            </form>
         </div>
     </div>
 </x-app-layout>
