@@ -37,7 +37,9 @@ class DashboardController extends Controller
         });
 
         $stats = [
-            'users' => User::count(),
+            'users' => User::whereHas('role', function ($query) {
+                $query->where('name', '!=', User::ROLE_ADMIN);
+            })->count(),
             'assignments' => $periodId ? AssessmentAssignment::where('period_id', $periodId)->count() : 0,
             'assessments' => $periodId ? KpiAssessment::where('period_id', $periodId)->count() : 0,
         ];
