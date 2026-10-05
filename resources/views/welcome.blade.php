@@ -40,7 +40,7 @@
                 KPI System
             </h1>
             <p class="text-[#5B6B68] mb-12 text-base">
-                    Penilain Karyawan PT. ANSEL MUDA BERKARYA
+                Penilaian Karyawan PT. ANSEL MUDA BERKARYA
             </p>
 
             <!-- Kartu Login -->
@@ -57,13 +57,16 @@
                     <p class="text-sm text-[#5B6B68]">Absen dan lihat KPI harian lewat kiosk</p>
                 </a>
 
-                <a href="{{ route('login') }}" class="card-hover hard-shadow group block rounded-xl border-2 p-5 bg-white" style="border-color:#16302E;">
+                {{-- Kalau admin sudah login, langsung ke dashboard. Kalau belum, ke halaman login. --}}
+                <a href="{{ auth()->check() ? route('admin.dashboard') : route('login') }}" class="card-hover hard-shadow group block rounded-xl border-2 p-5 bg-white" style="border-color:#16302E;">
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style="background:#F4A261;">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
                     </div>
-                    <div class="font-display font-semibold text-lg mb-1" style="color:#16302E;">Login Admin</div>
+                    <div class="font-display font-semibold text-lg mb-1" style="color:#16302E;">
+                        {{ auth()->check() ? 'Masuk Dashboard Admin' : 'Login Admin' }}
+                    </div>
                     <p class="text-sm text-[#5B6B68]">Kelola data, penilaian, dan laporan tim</p>
                 </a>
 
